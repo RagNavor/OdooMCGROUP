@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <menuitem id="menu_academic_root"
+              name="Gestión Académica"
+              sequence="10"
+              />
+
+    <menuitem id="menu_academic_contract_root"
+              name="Contratos"
+              parent="menu_academic_root"
+              sequence="10"/>
+
+    <record id="action_academic_contract" model="ir.actions.act_window">
+        <field name="name">Contratos Académicos</field>
+        <field name="res_model">academic.contract</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                ¡Crea tu primer contrato académico aquí!
+            </p>
+        </field>
+    </record>
+    <menuitem id="menu_academic_contract"
+              name="Contratos"
+              parent="menu_academic_contract_root"
+              action="action_academic_contract"
+              sequence="10"/>
+
+    <menuitem id="menu_academic_subject_root"
+              name="Materias"
+              parent="menu_academic_root"
+              sequence="20"/>
+
+    <record id="action_academic_subject" model="ir.actions.act_window">
+        <field name="name">Materias Académicas</field>
+        <field name="res_model">academic.subject</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Define las materias que la institución ofrece.
+            </p>
+        </field>
+    </record>
+    <menuitem id="menu_academic_subject"
+              name="Materias"
+              parent="menu_academic_subject_root"
+              action="action_academic_subject"
+              sequence="10"/>
+
+    <menuitem id="menu_academic_partners_root"
+              name="Personas"
+              parent="menu_academic_root"
+              sequence="30"/>
+
+    <record id="action_academic_students" model="ir.actions.act_window">
+        <field name="name">Estudiantes</field>
+        <field name="res_model">res.partner</field>
+        <field name="domain">[('is_student', '=', True)]</field> <field name="view_mode">kanban,tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Gestiona los estudiantes de tu institución.
+            </p>
+        </field>
+    </record>
+    <menuitem id="menu_academic_student"
+              name="Estudiantes"
+              parent="menu_academic_partners_root"
+              action="action_academic_students"
+              sequence="10"/>
+
+    <record id="action_academic_professors" model="ir.actions.act_window">
+        <field name="name">Profesores</field>
+        <field name="res_model">res.partner</field>
+        <field name="domain">[('is_professor', '=', True)]</field> <field name="view_mode">kanban,tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Gestiona los profesores de tu institución.
+            </p>
+        </field>
+    </record>
+    <menuitem id="menu_academic_professor"
+              name="Profesores"
+              parent="menu_academic_partners_root"
+              action="action_academic_professors"
+              sequence="20"/>
+
+</odoo>

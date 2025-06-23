@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_academic_subject_form" model="ir.ui.view">
+        <field name="name">academic.subject.form</field>
+        <field name="model">academic.subject</field>
+        <field name="arch" type="xml">
+            <form string="Materia Académica">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="code"/>
+                            <field name="credits"/>
+                        </group>
+                        <group>
+                            <field name="description"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Profesores Asignados">
+                            <field name="professor_ids">
+                                <tree editable="bottom">
+                                    <field name="name"/>
+                                    <field name="email"/>
+                                    <field name="phone"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_academic_subject_tree" model="ir.ui.view">
+        <field name="name">academic.subject.tree</field>
+        <field name="model">academic.subject</field>
+        <field name="arch" type="xml">
+            <tree string="Materias Académicas">
+                <field name="name"/>
+                <field name="code"/>
+                <field name="credits"/>
+                <field name="professor_ids" widget="many2many_tags"/> </tree>
+        </field>
+    </record>
+</odoo>

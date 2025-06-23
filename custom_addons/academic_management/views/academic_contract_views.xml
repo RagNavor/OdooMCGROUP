@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_academic_contract_form" model="ir.ui.view">
+        <field name="name">academic.contract.form</field>
+        <field name="model">academic.contract</field>
+        <field name="arch" type="xml">
+            <form string="Contrato Académico">
+                <header>
+                    <field name="state" widget="statusbar" options="{'clickable': '1'}"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="student_id"/>
+                            <field name="contract_date"/>
+                        </group>
+                        <group>
+                            <field name="start_date"/>
+                            <field name="end_date"/>
+                        </group>
+                    </group>
+                    <field name="allowed_subject_ids" invisible="1"/>
+                    <field name="allowed_professor_ids" invisible="1"/>
+                    <notebook>
+                        <page string="Materias Contratadas">
+                            <field name="contract_line_ids">
+                                <tree string="Líneas de Materia" editable="bottom">
+                                    <field name="subject_id" domain="[('id', 'in', allowed_subject_ids)]"/>
+                                    <field name="professor_id" domain="[('is_professor', '=', True), ('id', 'in', allowed_professor_ids)]"/>
+                                    <field name="cost" widget="monetary" options="{'currency_field': 'company_currency_id'}"/>
+                                    <field name="company_currency_id" invisible="1"/>
+                                    <field name="allowed_subject_ids" invisible="1"/>
+                                    <field name="allowed_professor_ids" invisible="1"/>
+                                </tree>
+                                <form string="Línea de Materia">
+                                    <group>
+                                        <field name="subject_id"/>
+                                        <field name="professor_id"/>
+                                        <field name="cost" widget="monetary" options="{'currency_field': 'company_currency_id'}"/>
+                                        <field name="company_currency_id" invisible="1"/>
+                                    </group>
+                                </form>
+                            </field>
+                            <group class="oe_subtotal_footer oe_right">
+                                <field name="total_cost" widget="monetary" options="{'currency_field': 'company_currency_id'}"/>
+                                <field name="company_currency_id" invisible="1"/>
+                            </group>
+                            <div class="oe_clear"/>
+                        </page>
+                        <page string="Información Adicional">
+                            <group>
+                                <field name="payment_id"/>
+                                <field name="payment_status"/>
+                            </group>
+                        </page>
+                    </notebook>
+                    <div class="oe_chatter">
+                        <field name="message_follower_ids" widget="mail_followers"/>
+                        <field name="activity_ids" widget="mail_activity"/>
+                        <field name="message_ids" widget="mail_thread"/>
+                    </div>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_academic_contract_tree" model="ir.ui.view">
+        <field name="name">academic.contract.tree</field>
+        <field name="model">academic.contract</field>
+        <field name="arch" type="xml">
+            <tree string="Contratos Académicos">
+                <field name="name"/>
+                <field name="student_id"/>
+                <field name="contract_date"/>
+                <field name="total_cost" widget="monetary" options="{'currency_field': 'company_currency_id'}"/>
+                <field name="state" widget="badge" decoration-success="state == 'confirmed'" decoration-warning="state == 'draft'"/>
+                <field name="payment_status" widget="badge" decoration-success="payment_status == 'paid'" decoration-info="payment_status == 'pending'" decoration-warning="payment_status == 'partial'"/>
+            </tree>
+        </field>
+    </record>
+</odoo>
