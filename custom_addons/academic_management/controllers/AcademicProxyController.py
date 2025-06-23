@@ -16,15 +16,14 @@ class AcademicProxyController(http.Controller):
         Actúa como proxy para cargar el contenido de un dashboard externo (ej. Power BI).
         La URL real se mantiene en el servidor de Odoo.
         """
-        # La URL del dashboard de Power BI o cualquier otra URL pública que quieras embeber.
-        # ¡IMPORTANTE!: Reemplaza esta URL con tu enlace público real.
+        
         _logger.warning(f"estoy recibiendo: {request}")
         
 
         headers_to_send = {
             key: value
             for key, value in request.httprequest.headers.items()
-            if key.lower() not in ['host', 'origin', 'content-length', 'connection'] # Evitar cabeceras problemáticas
+            if key.lower() not in ['host', 'origin', 'content-length', 'connection'] 
         }
         if 'Content-Type' in request.httprequest.headers:
             headers_to_send['Content-Type'] = request.httprequest.headers['Content-Type']
@@ -40,40 +39,26 @@ class AcademicProxyController(http.Controller):
             elif method == 'POST':
                 # Realiza la solicitud POST reenviando los datos del cuerpo
                 response = requests.post(self.POWERBI_BASE_URL, verify=True, headers=headers_to_send, data=request.httprequest.get_data())
-
-            
-
             else:
                 _logger.warning(f"Controlador: Método HTTP no soportado en dashboard_proxy: {method}")
-                return request.not_found() # O un 405 Method Not Allowed
+                return request.not_found() 
 
-            # Si llegamos aquí, hemos hecho una solicitud GET/POST
             
-
-            # Reenviar las cabeceras de la respuesta externa al cliente (CRÍTICO para MIME y CORS)
             headers_to_forward_to_client = []
             for header_name, header_value in response.headers.items():
-                # Evita cabeceras que pueden causar errores o son manejadas por Odoo/requests
+                
                 if header_name.lower() not in ['content-encoding', 'transfer-encoding', 'content-length', 'connection']:
                     if header_name.lower() == 'set-cookie':
                         modified_cookie_value = header_value
 
                         modified_cookie_value = re.sub(r';\s*Domain=[^;]+', '', modified_cookie_value, flags=re.IGNORECASE)
-                    
-                        # 2. Añadir el nuevo Domain, que es el dominio de tu Odoo.
-                        # El navegador ahora "creerá" que la cookie es para tu sitio.
                         modified_cookie_value = f"{modified_cookie_value}; Domain={self.ODOC_DOMAIN}"
                         
-                        # 1. Eliminar cualquier atributo SameSite existente (ya sea Lax, Strict o None)
+                       
                         modified_cookie_value = re.sub(r';\s*SameSite=[^;]+', '', modified_cookie_value, flags=re.IGNORECASE)
-                        
-                        # 2. Asegurar que 'Secure' esté presente. Si ya está, no hace nada. Si no, lo añade.
-                        # Esto es un requisito para SameSite=None.
                         if '; Secure' not in modified_cookie_value and ';secure' not in modified_cookie_value:
                             modified_cookie_value = f"{modified_cookie_value}; Secure"
                             
-                        # 3. Añadir SameSite=None.
-                        # Esto es lo que permite que la cookie sea enviada en un contexto de terceros (iframe).
                         modified_cookie_value = f"{modified_cookie_value}; SameSite=None"
                         
                         _logger.info(f"Cookie original: '{header_value}' de Power BI. Cookie modificada (SameSite=None; Secure forzado): '{modified_cookie_value}'")
@@ -81,11 +66,10 @@ class AcademicProxyController(http.Controller):
                     else:
                         headers_to_forward_to_client.append((header_name, header_value))
 
-            # Añadir cabeceras CORS de vuelta al cliente si son necesarias para el iframe
             if 'Access-Control-Allow-Origin' not in response.headers:
                 headers_to_forward_to_client.append(('Access-Control-Allow-Origin', request.httprequest.headers.get('Origin', '*')))
             if 'Access-Control-Allow-Credentials' not in response.headers:
-                headers_to_forward_to_client.append(('Access-Control-Allow-Credentials', 'true')) # Si PowerBI usa credenciales/cookies
+                headers_to_forward_to_client.append(('Access-Control-Allow-Credentials', 'true')) 
 
             _logger.info(f"Controlador: Solicitud '{method}' a {self.POWERBI_VIEW_URL} proxied exitosamente con Content-Type: {response.headers.get('Content-Type')}")
             return request.make_response(response.content, headers=headers_to_forward_to_client)

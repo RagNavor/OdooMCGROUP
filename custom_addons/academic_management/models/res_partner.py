@@ -7,13 +7,6 @@ class ResPartner(models.Model):
     student_code = fields.Char(string='Código de Estudiante', copy=False)
     is_professor = fields.Boolean(string='Es Profesor', default=False)
     professor_id_number = fields.Char(string='Número de Identificación de Profesor', copy=False)
-    # subject_ids = fields.Many2many(
-    #     'academic.subject',
-    #     'academic_subject_professor_rel',
-    #     'professor_id',
-    #     'subject_id',
-    #     string='Materias que Imparte'
-    # )
     eligible_subject_ids = fields.Many2many(
         'academic.subject',
         'res_partner_academic_subject_rel', # Nombre de la tabla de relación
