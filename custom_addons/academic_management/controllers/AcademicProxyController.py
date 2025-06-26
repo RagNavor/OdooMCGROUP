@@ -90,44 +90,48 @@ class AcademicProxyController(http.Controller):
         Proxy para cualquier recurso solicitado por el HTML de Power BI que
         se intente cargar desde el dominio de Odoo (ej. /scripts/hash-manifest.js).
         """
-        # Filtra solo las rutas que potencialmente son de Power BI.
-        # Esto es CRÍTICO para no proxear todo el tráfico de Odoo.
-        # La ruta problemática que viste es "/13.0.26140.37/scripts/hash-manifest.js"
-        # Así que podrías buscar un prefijo como "13.0.26140.37"
-        # O, si Power BI es más consistente, podrías buscar "/scripts/" o "/styles/"
-        # O el patrón '/<version>/<type>/<filename>'
-        # Hay que ser MUY específico aquí para no atrapar rutas legítimas de Odoo.
+        
 
         # Ejemplo muy específico basado en tu error:
         _logger.info(f"Solicitud a {resource_path} recibida en dashboard_resource_proxy")
         if not resource_path.startswith('13.0.26140.37/') and \
            not resource_path.startswith('scripts/') and \
            not resource_path.startswith('styles/') and \
-           not resource_path.startswith('images/'): # Puedes añadir más prefijos de recursos de Power BI
-           # Si la ruta no coincide con los patrones de recursos de Power BI,
-           # Odoo debería intentar procesarla con sus propios controladores web estándar.
-           # Sin embargo, en un controlador catch-all como este, si no lo proxy,
-           # podría dar un 404. Es mejor ser explícito.
-           # Para este ejemplo, si no es PowerBI, dejamos que Odoo maneje el 404 estándar.
+           not resource_path.startswith('images/'): 
            _logger.debug(f"Controlador: No es un recurso de Power BI, ignorando: /{resource_path}")
-           return request.not_found() # Devuelve un 404 si no es un recurso de PowerBI.
+           return request.not_found() 
 
         full_external_url = f"{self.POWERBI_BASE_URL}/{resource_path}"
         _logger.info(f"Controlador: Proxear recurso: {full_external_url}")
 
         try:
-            # Reenviar headers del navegador si es necesario, pero Content-Type es el más importante
-            # También podrías pasar request.httprequest.headers si quieres reenviar todas las cabeceras
+           
             response = requests.get(full_external_url, verify=True, headers={'User-Agent': 'Mozilla/5.0'})
             response.raise_for_status()
 
             # Extraer y reenviar las cabeceras HTTP originales, especialmente Content-Type
             headers_to_forward = []
             for header_name, header_value in response.headers.items():
-                # Es CRÍTICO reenviar Content-Type.
-                # Evita cabeceras que pueden causar errores o son manejadas por Odoo.
-                if header_name.lower() not in ['content-encoding', 'transfer-encoding', 'content-length', 'set-cookie', 'connection']:
-                    headers_to_forward.append((header_name, header_value))
+                
+                if header_name.lower() not in ['content-encoding', 'transfer-encoding', 'content-length', 'connection']:
+                    if header_name.lower() == 'set-cookie':
+                        modified_cookie_value = header_value
+
+                        modified_cookie_value = re.sub(r';\s*Domain=[^;]+', '', modified_cookie_value, flags=re.IGNORECASE)
+                        modified_cookie_value = f"{modified_cookie_value}; Domain={self.ODOC_DOMAIN}"
+                        
+                       
+                        modified_cookie_value = re.sub(r';\s*SameSite=[^;]+', '', modified_cookie_value, flags=re.IGNORECASE)
+                        if '; Secure' not in modified_cookie_value and ';secure' not in modified_cookie_value:
+                            modified_cookie_value = f"{modified_cookie_value}; Secure"
+                            
+                        modified_cookie_value = f"{modified_cookie_value}; SameSite=None"
+                        
+                        _logger.info(f"Cookie original: '{header_value}' de Power BI. Cookie modificada (SameSite=None; Secure forzado): '{modified_cookie_value}'")
+                        headers_to_forward.append((header_name, modified_cookie_value))
+                    else:
+                        headers_to_forward.append((header_name, header_value))
+                    
 
             _logger.info(f"Controlador: Recurso {resource_path} proxied exitosamente con Content-Type: {response.headers.get('Content-Type')}")
             return request.make_response(response.content, headers=headers_to_forward)
